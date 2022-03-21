@@ -1,10 +1,12 @@
-from flask import Flask
+from fastapi import FastAPI
+
+app = FastAPI()
 
 
-app = Flask()
+@app.get('/get')
+def get():
+    return "Got it"
 
-
-
-
-if __name__ == "__main__":
-    app.run("--host=0.0.0.0")
+@app.get('/')
+def run():
+    return "Running"
