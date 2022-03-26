@@ -1,7 +1,4 @@
-from distutils.sysconfig import customize_compiler
-from urllib import response
 from fastapi import FastAPI, HTTPException
-from typing import Optional
 
 
 # from pydantic import BaseModel
@@ -55,5 +52,6 @@ async def createCustomer(name:str, email:str, password:str):
 
     customers.append(customer)
     return customer
+
 
     
