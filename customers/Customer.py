@@ -1,21 +1,19 @@
-from mimetypes import init
+from tokenize import Name
 from pydantic import BaseModel
+from customers.NameBoundary import NameBoundary
 
-class Customer(BaseModel):
-    name:str
-    email:str
-    password:str
+class Customer():
 
-    def __init__(self, name, email, password) -> None:
+    def __init__(self, name:NameBoundary, email, password) -> None:
         self.name = name
         self.email = email
         self.password = password
 
-class DefaultCustomer(BaseModel):
-    name:str = None
+class CustomerBoundary(BaseModel):
+    name:NameBoundary = None
     email:str = None
-    password:str = None
-    def __init__(self, name = None, email = None , password=None) -> None:
-        self.name = name
-        self.email = email
-        self.password = password
+    # def __init__(self, name = None, email = None , password=None) -> None:
+    #     self.name = name
+    #     self.email = email
+    #     self.password = password
+
