@@ -1,11 +1,2 @@
 services:
-    customer-handler:
-        build: ./customer-handler
-        container_name: customer-handler
-        
-    # db:
-    #     build: ./neo-db
-    #     container_name: neo-db
-      
-        
-        
+  
