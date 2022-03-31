@@ -7,3 +7,6 @@ class NameBoundary(BaseModel):
     # def __init__(self, first, last) -> None:
     #     self.first = first
     #     self.last = last
+
+class FriendBoundary(BaseModel):
+    email:str

@@ -2,18 +2,29 @@ from tokenize import Name
 from pydantic import BaseModel
 from customers.NameBoundary import NameBoundary
 
-class Customer():
+class Customer(BaseModel):
+    name:NameBoundary
+    email:str
+    password:str
+    birthdate:str
+    roles:list
 
-    def __init__(self, name:NameBoundary, email, password) -> None:
-        self.name = name
-        self.email = email
-        self.password = password
 
 class CustomerBoundary(BaseModel):
     name:NameBoundary = None
     email:str = None
-    # def __init__(self, name = None, email = None , password=None) -> None:
-    #     self.name = name
-    #     self.email = email
-    #     self.password = password
+    birthdate:str = None
+    roles:list = None
 
+    def make_cus_bound_from_cus(self, cus:Customer):
+        self.name = cus.name
+        self.email = cus.email
+        self.birthdate = cus.birthdate
+        self.roles = cus.roles
+        return self
+
+class CustomerUpdater(BaseModel):
+    name:NameBoundary = None
+    password:str = None
+    birthdate:str = None
+    roles:list = None
