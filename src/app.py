@@ -1,15 +1,16 @@
-import fastapi_pagination
 import datetime
 
 from distutils.sysconfig import customize_compiler
+from hashlib import new
 from urllib import response
 from fastapi import FastAPI, HTTPException
 from typing import Optional
 from fastapi_pagination import Page, add_pagination, paginate
+import customers.Validations as v
 
 
 # from pydantic import BaseModel
-from customers.Customer import Customer, CustomerBoundary, CustomerUpdater
+from customers.Customer import Customer, CustomerBoundary, UpdateForm
 from customers.NameBoundary import NameBoundary, FriendBoundary
 
 SORT_OPTIONS = {'date':lambda x:datetime.datetime.strptime(x.birthdate, "%d-%m-%Y").timestamp(),
@@ -46,26 +47,49 @@ async def login(email:str, password:str):
 
     raise HTTPException(status_code=404, detail="Customer not found") 
 
-#TODO: validations
 @app.post("/customers")
 async def createCustomer(fullname:NameBoundary, email:str, password:str,birthdate:str,roles:list):
     global customers
     if email in customers.keys(): 
         raise HTTPException(status_code=500, detail="Customer already exist")
-    customers[email] = Customer(name=fullname, email=email, password=password,birthdate=birthdate,rolse=roles) 
+    # ==== Input validations ==========
+    v.validateEmail(email)
+    v.validateName(fullname)
+    v.validatePassword(password)
+    v.validateBirthDate(birthdate)
+    v.validateRoles(roles)
+    #==================================
+    customers[email] = Customer(name=fullname, email=email, password=password,birthdate=birthdate,roles=roles) 
     return CustomerBoundary().make_cus_bound_from_cus(customers[email])
 
 #TODO: validations 
 @app.put("/customers/{email}", response_model = CustomerBoundary)
-async def updateCostumer(email:str, customer:CustomerUpdater):
+async def updateCostumer(email:str, new_details:UpdateForm):
     global customers
     if email in customers.keys():
-        c = customers[email]
-        if customer.name:
-            c.name = customer.name
-        if customer.password:
-            c.password = customer.password
-        return CustomerBoundary().make_cus_bound_from_cus(c)
+        customer = customers[email]
+        
+        if new_details.name:
+            if new_details.name.first and new_details.name.last:
+                customer.name = new_details.name
+            elif new_details.name.first:
+                customer.name.first = new_details.name.first
+            elif new_details.name.last:
+                customer.name.last = new_details.name.last
+
+        if new_details.password:
+            v.validatePassword(new_details.password)
+            customer.password = new_details.password
+
+        if new_details.birthdate:
+            v.validateBirthDate(new_details.birthdate)
+            customer.birthdate = new_details.birthdate
+
+        if new_details.roles:
+            v.validateRoles(new_details.roles)
+            customer.roles += new_details.roles
+
+        return CustomerBoundary().make_cus_bound_from_cus(customer)
     
     raise HTTPException(status_code=404, detail="Customer not found") 
 

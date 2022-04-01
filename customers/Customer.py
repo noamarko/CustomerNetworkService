@@ -23,7 +23,7 @@ class CustomerBoundary(BaseModel):
         self.roles = cus.roles
         return self
 
-class CustomerUpdater(BaseModel):
+class UpdateForm(BaseModel):
     name:NameBoundary = None
     password:str = None
     birthdate:str = None
