@@ -1,15 +1,8 @@
 import datetime
-
-from distutils.sysconfig import customize_compiler
-from hashlib import new
-from urllib import response
 from fastapi import FastAPI, HTTPException
-from typing import Optional
 from fastapi_pagination import Page, add_pagination, paginate
-import customers.Validations as v
 
-
-# from pydantic import BaseModel
+import utils.Validations as v
 from customers.Customer import Customer, CustomerBoundary, UpdateForm
 from customers.NameBoundary import NameBoundary, FriendBoundary
 
@@ -17,10 +10,10 @@ SORT_OPTIONS = {'date':lambda x:datetime.datetime.strptime(x.birthdate, "%d-%m-%
                 'email':lambda x:x.email,'name':lambda x:x.name.first+x.name.last} 
 app = FastAPI()
 customers = {
-  "nadav@gmail.com": Customer(name=NameBoundary(first='nadav',last='s'), email='nadav@gmail.com', password='123',birthdate='04-09-1993',roles=["goldCustomer","platinumClub","primeService"]),
-  "lidor@hotmail.com": Customer(name=NameBoundary(first='lidor',last='amitay'), email='lidor@hotmail.com', password='123',birthdate='04-01-1992',roles=["goldCustomer","platinumClub","   "]),
-  "noam@gmail.com": Customer(name=NameBoundary(first='noam',last='marko'), email='noam@gmail.com', password='123',birthdate='01-08-1994',roles=["lowService"]),
-  "nissan@walla.co.il": Customer(name=NameBoundary(first='nissan',last='dalva'), email='nissan@walla.co.il', password='123',birthdate='04-10-1993',roles=["freeAcount"]),
+#   "nadav@gmail.com": Customer(name=NameBoundary(first='nadav',last='s'), email='nadav@gmail.com', password='123',birthdate='04-09-1993',roles=["goldCustomer","platinumClub","primeService"]),
+#   "lidor@hotmail.com": Customer(name=NameBoundary(first='lidor',last='amitay'), email='lidor@hotmail.com', password='123',birthdate='04-01-1992',roles=["goldCustomer","platinumClub","   "]),
+#   "noam@gmail.com": Customer(name=NameBoundary(first='noam',last='marko'), email='noam@gmail.com', password='123',birthdate='01-08-1994',roles=["lowService"]),
+#   "nissan@walla.co.il": Customer(name=NameBoundary(first='nissan',last='dalva'), email='nissan@walla.co.il', password='123',birthdate='04-10-1993',roles=["freeAcount"]),
 }
 
 friends = {}
@@ -62,7 +55,7 @@ async def createCustomer(fullname:NameBoundary, email:str, password:str,birthdat
     customers[email] = Customer(name=fullname, email=email, password=password,birthdate=birthdate,roles=roles) 
     return CustomerBoundary().make_cus_bound_from_cus(customers[email])
 
-#TODO: validations 
+
 @app.put("/customers/{email}", response_model = CustomerBoundary)
 async def updateCostumer(email:str, new_details:UpdateForm):
     global customers
@@ -137,7 +130,7 @@ async def search_customer(sortBy=None, sortOrder=None, criteriaType=None,criteri
             return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS[sortBy], reverse=True if sortOrder=='DESC' else False))
         else:
             HTTPException(status_code=400, detail="Invalid sort parameter") 
-    return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS['email']))    
+    return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS['email']))
 
 
 @app.get('/friends/')

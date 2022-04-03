@@ -56,5 +56,5 @@ def validateBirthDate(birth_date: str):
 def validateRoles(roles: list):
     for role in roles:
         if not role:
-            raise HTTPException(status_code=400, detail="Role can not be an empty string")
+            raise HTTPException(status_code=400, detail="Role can not be empty")
         return True
