@@ -1,4 +1,3 @@
-from tokenize import Name
 from pydantic import BaseModel
 from customers.NameBoundary import NameBoundary
 
