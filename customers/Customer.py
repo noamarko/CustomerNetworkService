@@ -2,11 +2,11 @@ from pydantic import BaseModel
 from customers.NameBoundary import NameBoundary
 
 class Customer(BaseModel):
-    name:NameBoundary
-    email:str
-    password:str
-    birthdate:str
-    roles:list
+    name:NameBoundary = None
+    email:str = None
+    password:str = None
+    birthdate:str = None
+    roles:list = None
 
 
 class CustomerBoundary(BaseModel):

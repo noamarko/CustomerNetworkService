@@ -5,6 +5,8 @@ from fastapi import HTTPException
 
 
 def validateEmail(email):
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
     # regular expression for validating an Email
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
@@ -29,12 +31,13 @@ def validateFirstOrLast(firstOrLast:str, type:str):
         raise HTTPException(status_code=400, detail=f"{type} name can not be empty")
 
 def validatePassword(password: str):
+    if not password:
+        raise HTTPException(
+        status_code=400, detail="Password is required")
     if len(password) < 5:
-        # return False
         raise HTTPException(
             status_code=400, detail="Password must contain at least 5 letters")
     elif not bool(re.search(r'\d', password)):
-        # return False
         raise HTTPException(
             status_code=400, detail="Password must contain at least one digit")
     else:
@@ -42,6 +45,9 @@ def validatePassword(password: str):
 
 
 def validateBirthDate(birth_date: str):
+    if not birth_date:
+        raise HTTPException(
+        status_code=400, detail="Birth Date is required")
     try:
         x = datetime.datetime.strptime(birth_date, '%d-%m-%Y')
         assert x < datetime.datetime.today()
@@ -54,6 +60,8 @@ def validateBirthDate(birth_date: str):
 
 
 def validateRoles(roles: list):
+    if roles is None:
+        raise HTTPException(status_code=400, detail="roles is required")
     for role in roles:
         if not role:
             raise HTTPException(status_code=400, detail="Role can not be empty")

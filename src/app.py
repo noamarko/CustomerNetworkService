@@ -1,16 +1,22 @@
 import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response, status
 from fastapi_pagination import Page, add_pagination, paginate
 
 import utils.Validations as v
 from customers.Customer import Customer, CustomerBoundary, UpdateForm
 from customers.NameBoundary import NameBoundary, FriendBoundary
+from customers.CustomPage import CustomPage
 
-SORT_OPTIONS = {'date':lambda x:datetime.datetime.strptime(x.birthdate, "%d-%m-%Y").timestamp(),
+SORT_OPTIONS = {'birthdate':lambda x:datetime.datetime.strptime(x.birthdate, "%d-%m-%Y").timestamp(),
                 'email':lambda x:x.email,'name':lambda x:x.name.first+x.name.last} 
 app = FastAPI()
 
-customers = {}
+customers = {
+    "nadav@gmail.com": Customer(name=NameBoundary(first='nadav',last='s'), email='nadav@gmail.com', password='123',birthdate='04-09-1993',roles=["goldCustomer","platinumClub","primeService"]),
+    "lidor@hotmail.com": Customer(name=NameBoundary(first='lidor',last='amitay'), email='lidor@hotmail.com', password='123',birthdate='04-01-1992',roles=["goldCustomer","platinumClub","   "]),
+    "noam@gmail.com": Customer(name=NameBoundary(first='noam',last='marko'), email='noam@gmail.com', password='123',birthdate='01-08-1994',roles=["lowService"]),
+    "nissan@walla.co.il": Customer(name=NameBoundary(first='nissan',last='dalva'), email='nissan@walla.co.il', password='123',birthdate='04-10-1993',roles=["freeAcount"])
+}
 friends = {}
 
 
@@ -25,33 +31,31 @@ async def retriveCustomerDetails(email:str):
 
 @app.get("/customers/login/{email}")
 async def login(email:str, password:str):
-    
     if email in customers.keys():
         c = customers[email]
         if c.password == password:
             return CustomerBoundary().make_cus_bound_from_cus(c)
-        else:
-            raise HTTPException(status_code=401, detail="Incorrect password") 
 
-    raise HTTPException(status_code=404, detail="Customer not found") 
+    raise HTTPException(status_code=401, detail="Incorrect Email or Password") 
 
 @app.post("/customers")
-async def createCustomer(fullname:NameBoundary, email:str, password:str,birthdate:str,roles:list):
+async def createCustomer(customer:Customer):
     global customers
-    if email in customers.keys(): 
+    if customer.email in customers.keys(): 
         raise HTTPException(status_code=500, detail="Customer already exist")
     # ==== Input validations ==========
-    v.validateEmail(email)
-    v.validateName(fullname)
-    v.validatePassword(password)
-    v.validateBirthDate(birthdate)
-    v.validateRoles(roles)
+    v.validateEmail(customer.email)
+    v.validateName(customer.name)
+    v.validatePassword(customer.password)
+    v.validateBirthDate(customer.birthdate)
+    v.validateRoles(customer.roles)
     #==================================
-    customers[email] = Customer(name=fullname, email=email, password=password,birthdate=birthdate,roles=roles) 
-    return CustomerBoundary().make_cus_bound_from_cus(customers[email])
+    customers[customer.email] = Customer(name=customer.name, email=customer.email, password=customer.password,
+                                        birthdate=customer.birthdate,roles=list(set(customer.roles))) 
+    return CustomerBoundary().make_cus_bound_from_cus(customers[customer.email])
 
 
-@app.put("/customers/{email}", response_model = CustomerBoundary)
+@app.put("/customers/{email}")#, response_model = CustomerBoundary)
 async def updateCostumer(email:str, new_details:UpdateForm):
     global customers
     if email in customers.keys():
@@ -75,11 +79,15 @@ async def updateCostumer(email:str, new_details:UpdateForm):
 
         if new_details.roles:
             v.validateRoles(new_details.roles)
-            customer.roles += new_details.roles
+            # roles has unique values
+            customer.roles = list(set(customer.roles + new_details.roles))
+            
 
-        return CustomerBoundary().make_cus_bound_from_cus(customer)
-    
-    raise HTTPException(status_code=404, detail="Customer not found") 
+        # return without body
+        return Response(status_code=200)
+
+    else:
+        raise HTTPException(status_code=404, detail="Customer not found") 
 
 
 @app.put('/customers/{email}/friends')
@@ -114,6 +122,7 @@ async def delete_all_customers():
 @app.get('/customers/search',response_model=Page[CustomerBoundary])
 async def search_customer(sortBy=None, sortOrder=None, criteriaType=None,criteriaValue =None):
     cus_boundary_list = [CustomerBoundary().make_cus_bound_from_cus(c) for c in [customers[email] for email in customers.keys()]]
+    # return cus_boundary_list
     if criteriaType=='byBirthYear' and criteriaValue:
         cus_boundary_list = [CustomerBoundary().make_cus_bound_from_cus(c) for c in [customers[email] for email in customers.keys()] if c.birthdate.split('-')[-1] == criteriaValue]
     elif criteriaType=='byEmailDomain' and criteriaValue:
@@ -122,9 +131,10 @@ async def search_customer(sortBy=None, sortOrder=None, criteriaType=None,criteri
         cus_boundary_list = [CustomerBoundary().make_cus_bound_from_cus(c) for c in [customers[email] for email in customers.keys()] if criteriaValue in c.roles]
     if sortBy:
         if sortBy in SORT_OPTIONS:
-            return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS[sortBy], reverse=True if sortOrder=='DESC' else False))
+            return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS[sortBy], reverse=True if sortOrder.upper=='DESC' else False))
         else:
             HTTPException(status_code=400, detail="Invalid sort parameter") 
+    
     return paginate(sorted(cus_boundary_list,key=SORT_OPTIONS['email']))
 
 
