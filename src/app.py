@@ -1,22 +1,17 @@
 import datetime
 from fastapi import FastAPI, HTTPException, Response, status
-from fastapi_pagination import Page, add_pagination, paginate
+from fastapi_pagination import add_pagination, paginate
 
 import utils.Validations as v
 from customers.Customer import Customer, CustomerBoundary, UpdateForm
-from customers.NameBoundary import NameBoundary, FriendBoundary
+from customers.NameBoundary import FriendBoundary
 from customers.CustomPage import CustomPage
 
 SORT_OPTIONS = {'birthdate':lambda x:datetime.datetime.strptime(x.birthdate, "%d-%m-%Y").timestamp(),
                 'email':lambda x:x.email,'name':lambda x:x.name.first+x.name.last} 
 app = FastAPI()
 
-customers = {
-    "nadav@gmail.com": Customer(name=NameBoundary(first='nadav',last='s'), email='nadav@gmail.com', password='123',birthdate='04-09-1993',roles=["goldCustomer","platinumClub","primeService"]),
-    "lidor@hotmail.com": Customer(name=NameBoundary(first='lidor',last='amitay'), email='lidor@hotmail.com', password='123',birthdate='04-01-1992',roles=["goldCustomer","platinumClub","   "]),
-    "noam@gmail.com": Customer(name=NameBoundary(first='noam',last='marko'), email='noam@gmail.com', password='123',birthdate='01-08-1994',roles=["lowService"]),
-    "nissan@walla.co.il": Customer(name=NameBoundary(first='nissan',last='dalva'), email='nissan@walla.co.il', password='123',birthdate='04-10-1993',roles=["freeAcount"])
-}
+customers = {}
 friends = {}
 
 
@@ -106,7 +101,7 @@ async def friends_connection(email:str, friend:FriendBoundary):
         raise HTTPException(status_code=404, detail="Customer not found") 
 
 
-@app.get('/customers/{email}/friends',response_model=Page[CustomerBoundary])
+@app.get('/customers/{email}/friends',response_model=CustomPage[CustomerBoundary])
 async def customer_friends_list(email:str):
     if email in friends.keys():
         return paginate([CustomerBoundary().make_cus_bound_from_cus(c) for c in [customers[email] for email in friends[email]]])
@@ -119,7 +114,7 @@ async def delete_all_customers():
     return customers
 
 
-@app.get('/customers/search',response_model=Page[CustomerBoundary])
+@app.get('/customers/search',response_model=CustomPage[CustomerBoundary])
 async def search_customer(sortBy=None, sortOrder=None, criteriaType=None,criteriaValue =None):
     cus_boundary_list = [CustomerBoundary().make_cus_bound_from_cus(c) for c in [customers[email] for email in customers.keys()]]
     # return cus_boundary_list
@@ -143,7 +138,7 @@ async def customer_friends_list():
     return friends
 
 
-@app.get('/customers/{email}/friends/secondLevel',response_model=Page[CustomerBoundary])
+@app.get('/customers/{email}/friends/secondLevel',response_model=CustomPage[CustomerBoundary])
 async def second_level_customer_friends_list(email:str):
     if email in friends:
         third = first = friends[email]
